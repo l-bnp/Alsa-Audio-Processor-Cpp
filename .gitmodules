@@ -1,0 +1,3 @@
+[submodule "Processor-C++/submodules/Event-Manager-Cpp"]
+	path = Processor-C++/submodules/Event-Manager-Cpp
+	url = https://github.com/l-bnp/Event-Manager-Cpp.git

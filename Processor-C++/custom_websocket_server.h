@@ -8,7 +8,7 @@
 #include <memory>
 #include <ixwebsocket/IXWebSocketServer.h>
 #include "json.hpp"
-#include "event_manager.h"
+#include "submodules/Event-Manager-Cpp/event_manager.h"
 
 using json = nlohmann::json;
 

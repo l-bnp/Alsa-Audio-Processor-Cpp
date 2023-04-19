@@ -14,7 +14,7 @@
 #include "alsa_device.h"
 #include "biquad_filter.h"
 #include "equalizer.h"
-#include "event_manager.h"
+#include "submodules/Event-Manager-Cpp/event_manager.h"
 
 class AudioProcessor
 {

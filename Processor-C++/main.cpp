@@ -4,7 +4,7 @@
 #include <sstream>
 #include "audio_processor.h"
 #include "custom_websocket_server.h"
-#include "event_manager.h"
+#include "submodules/Event-Manager-Cpp/event_manager.h"
 
 // Function to parse an unsigned integer argument from a command line argument string
 bool parse_uint_arg(const char *arg, const std::string &flag, unsigned int &value)
