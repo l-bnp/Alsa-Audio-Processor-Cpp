@@ -5,6 +5,7 @@
 #include "audio_processor.h"
 #include "custom_websocket_server.h"
 #include "submodules/Event-Manager-Cpp/event_manager.h"
+#include "database.h"
 
 // Function to parse an unsigned integer argument from a command line argument string
 bool parse_uint_arg(const char *arg, const std::string &flag, unsigned int &value)
@@ -74,6 +75,14 @@ int main(int argc, char *argv[])
 
     // Create EventManager object
     EventManager event_manager;
+
+    // Database connection details
+    std::string host = "localhost";
+    int dbPort = 33060;
+    std::string user = "root";
+    std::string password = "assword";
+    std::string schema = "audio_processor";
+    Database db(host, dbPort, user, password, schema, event_manager);
 
     // Create AudioProcessor object with the specified audio interface, input and output channels, and sample rate
     AudioProcessor audioProcessor(audio_interface_cstr, input_channels, output_channels, rate, event_manager);

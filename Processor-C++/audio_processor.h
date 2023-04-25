@@ -26,14 +26,6 @@ public:
     // Start and stop audio processing functions
     void start();
     void stop();
-    // Parameter setting functions to be accessed by other classes
-    bool setVolume(const std::string &channel_type, unsigned int channel_number, int volume_db);
-    bool setMute(const std::string &channel_type, unsigned int channel_number, bool mute);
-    bool setRouting(unsigned int input_channel_number, unsigned int output_channel_number, bool route);
-    bool setFilter(const std::string &channel_type, unsigned int channel_number, std::string filter_id, bool isEnabled,
-                   std::string filter_type_str, double center_frequency, double q_factor, double gain_db);
-    int getAmplitude(const std::string &channel_type, unsigned int channel) const;
-    void getVolumes(const std::string &channel_type) const;
 
 private:
     // Constants
@@ -43,6 +35,7 @@ private:
     const double MIN_Q_FACTOR = 0.1;
     const double MAX_Q_FACTOR = 10.0;
     const double MAX_GAIN_DB = 20.0;
+    const unsigned int MAX_FILTERS = 8;
     const unsigned int rms_buffer_size = 10000;
     // Event manager
     EventManager &event_manager;
@@ -52,7 +45,7 @@ private:
     unsigned int rate;
     unsigned int input_channels;
     unsigned int output_channels;
-    const int buffer_size = 2048;
+    const int buffer_size = 1024;
     // Siganl buffers
     std::vector<char> input_buffer;
     std::vector<short> mixed_samples;
@@ -71,8 +64,6 @@ private:
     std::vector<Equalizer> output_equalizers;
     // Audio processing function
     void process();
-    // Parameter value Error printing function
-    void handleError(const std::string &function_name) const;
     // Parameter value check function
     bool isValidChannel(const std::string &channel_type, unsigned int channel_number, unsigned int input_channels, unsigned int output_channels) const;
     bool isValidFrequency(double frequency) const;
@@ -80,6 +71,19 @@ private:
     bool isValidGainDb(double gain_db) const;
     // String to Biquad filter type function
     BiquadFilter::Type stringToFilterType(const std::string &filter_type_str) const;
+    // Set functions
+    void setVolume(
+        const std::string &channel_type, unsigned int channel_number, int volume_db, std::function<void(const std::string &, const std::string &)> callback = [](const std::string &, const std::string &) {});
+    void setMute(
+        const std::string &channel_type, unsigned int channel_number, bool mute, std::function<void(const std::string &, const std::string &)> callback = [](const std::string &, const std::string &) {});
+    void setRouting(
+        unsigned int input_channel_number, unsigned int output_channel_number, bool route, std::function<void(const std::string &, const std::string &)> callback = [](const std::string &, const std::string &) {});
+    void setFilter(
+        const std::string &channel_type, unsigned int channel_number, unsigned int filter_id, bool isEnabled,
+        std::string filter_type_str, double center_frequency, double q_factor, double gain_db, std::function<void(const std::string &, const std::string &)> callback = [](const std::string &, const std::string &) {});
+    // Get functions
+    int getAmplitude(const std::string &channel_type, unsigned int channel) const;
+    void getSignalAmplitudes(const std::string &channel_type, std::function<void(const std::string &, const std::string &, const std::vector<int> &)> callback) const;
 };
 
 // Constructor and destructor
@@ -89,10 +93,10 @@ AudioProcessor::AudioProcessor(const char *audio_interface, unsigned int input_c
       output_channels(output_channels),
       rate(rate),
       event_manager(event_manager),
-      input_mutes(input_channels, 1.0f),
-      output_mutes(output_channels, 1.0f),
-      input_volumes(input_channels, 1.0f),
-      output_volumes(output_channels, 1.0f),
+      input_mutes(input_channels),
+      output_mutes(output_channels),
+      input_volumes(input_channels),
+      output_volumes(output_channels),
       mixing_matrix(input_channels, std::vector<float>(output_channels, 1.0f)),
       processing_active(false),
       input_buffer(buffer_size * input_channels * sizeof(short)),
@@ -101,26 +105,86 @@ AudioProcessor::AudioProcessor(const char *audio_interface, unsigned int input_c
 {
     input_samples_buffer.resize(input_channels, std::vector<short>(rms_buffer_size, 0));
     output_samples_buffer.resize(output_channels, std::vector<short>(rms_buffer_size, 0));
+
     for (int i = 0; i < input_channels; ++i)
     {
+        event_manager.emitEvent<std::string, unsigned int,
+                                std::function<void(std::string, unsigned int, int)>>("get_volume", "input", i + 1,
+                                                                                     [this](const std::string &channel_type, unsigned int channel_number, int volume_db)
+                                                                                     { this->setVolume(channel_type, channel_number, volume_db); });
+
+        event_manager.emitEvent<std::string, unsigned int,
+                                std::function<void(std::string, unsigned int, bool)>>("get_mute", "input", i + 1,
+                                                                                      [this](const std::string &channel_type, unsigned int channel_number, bool mute)
+                                                                                      { this->setMute(channel_type, channel_number, mute); });
         input_equalizers.emplace_back(rate);
     }
     for (int i = 0; i < output_channels; ++i)
     {
+        event_manager.emitEvent<std::string, unsigned int,
+                                std::function<void(std::string, unsigned int, int)>>("get_volume", "output", i + 1,
+                                                                                     [this](const std::string &channel_type, unsigned int channel_number, int volume_db)
+                                                                                     { this->setVolume(channel_type, channel_number, volume_db); });
+
+        event_manager.emitEvent<std::string, unsigned int,
+                                std::function<void(std::string, unsigned int, bool)>>("get_mute", "output", i + 1,
+                                                                                      [this](const std::string &channel_type, unsigned int channel_number, bool mute)
+                                                                                      { this->setMute(channel_type, channel_number, mute); });
         output_equalizers.emplace_back(rate);
+    }
+    for (int i = 0; i < input_channels; ++i)
+    {
+        for (int j = 0; j < output_channels; ++j)
+        {
+            event_manager.emitEvent<unsigned int, unsigned int,
+                                    std::function<void(unsigned int, unsigned int, bool)>>("get_routing", i + 1, j + 1,
+                                                                                           [this](unsigned int input_channel_number, unsigned int output_channel_number, bool route)
+                                                                                           { this->setRouting(input_channel_number, output_channel_number, route); });
+        }
+    }
+    for (int i = 0; i < input_channels; ++i)
+    {
+        for (int j = 0; j < MAX_FILTERS; ++j)
+        {
+            event_manager.emitEvent<std::string, unsigned int, unsigned int,
+                                    std::function<void(std::string, unsigned int, unsigned int, bool, std::string, double, double, double)>>(
+                "get_filter", "input", i + 1, j + 1,
+                [this](const std::string &channel_type, unsigned int channel_number, unsigned int filter_number, bool enabled,
+                       const std::string &filter_type_str, double frequency, double q_factor, double gain_db)
+                { this->setFilter(channel_type, channel_number, filter_number, enabled, filter_type_str, frequency, q_factor, gain_db); });
+        }
+    }
+    for (int i = 0; i < output_channels; ++i)
+    {
+        for (int j = 0; j < MAX_FILTERS; ++j)
+        {
+            event_manager.emitEvent<std::string, unsigned int, unsigned int,
+                                    std::function<void(std::string, unsigned int, unsigned int, bool, std::string, double, double, double)>>(
+                "get_filter", "output", i + 1, j + 1,
+                [this](const std::string &channel_type, unsigned int channel_number, unsigned int filter_number, bool enabled,
+                       const std::string &filter_type_str, double frequency, double q_factor, double gain_db)
+                { this->setFilter(channel_type, channel_number, filter_number, enabled, filter_type_str, frequency, q_factor, gain_db); });
+        }
     }
 
     // Register events to the event manager
-    event_manager.on<const std::string &, unsigned int, int>("set_volume", [this](const std::string &channel_type, unsigned int channel_number, int volume_db)
-                                                             { this->setVolume(channel_type, channel_number, volume_db); });
-    event_manager.on<const std::string &, unsigned int, bool>("set_mute", [this](const std::string &channel_type, unsigned int channel_number, bool mute)
-                                                              { this->setMute(channel_type, channel_number, mute); });
-    event_manager.on<unsigned int, unsigned int, bool>("set_routing", [this](unsigned int input_channel_number, unsigned int output_channel_number, bool route)
-                                                       { this->setRouting(input_channel_number, output_channel_number, route); });
-    event_manager.on<const std::string &, unsigned int, std::string, bool, std::string, double, double, double>("set_filter", [this](const std::string &channel_type, unsigned int channel_number, std::string filter_id, bool isEnabled, std::string filter_type_str, double center_frequency, double q_factor, double gain_db)
-                                                                                                                { this->setFilter(channel_type, channel_number, filter_id, isEnabled, filter_type_str, center_frequency, q_factor, gain_db); });
-    event_manager.on<const std::string &>("get_volumes", [this](const std::string &channel_type)
-                                          { this->getVolumes(channel_type); });
+    event_manager.on<const std::string &, unsigned int, int, std::function<void(const std::string &, const std::string &)>>(
+        "set_volume", [this](const std::string &channel_type, unsigned int channel_number, int volume_db, std::function<void(const std::string &, const std::string &)> callback)
+        { this->setVolume(channel_type, channel_number, volume_db, callback); });
+    event_manager.on<const std::string &, unsigned int, bool, std::function<void(const std::string &, const std::string &)>>(
+        "set_mute", [this](const std::string &channel_type, unsigned int channel_number, bool mute, std::function<void(const std::string &, const std::string &)> callback)
+        { this->setMute(channel_type, channel_number, mute, callback); });
+    event_manager.on<unsigned int, unsigned int, bool, std::function<void(const std::string &, const std::string &)>>(
+        "set_routing", [this](unsigned int input_channel_number, unsigned int output_channel_number, bool route, std::function<void(const std::string &, const std::string &)> callback)
+        { this->setRouting(input_channel_number, output_channel_number, route, callback); });
+    event_manager.on<const std::string &, unsigned int, unsigned int, bool, std::string, double, double, double, std::function<void(const std::string &, const std::string &)>>(
+        "set_filter", [this](const std::string &channel_type, unsigned int channel_number, unsigned int filter_id, bool isEnabled, std::string filter_type_str,
+                             double center_frequency, double q_factor, double gain_db, std::function<void(const std::string &, const std::string &)> callback)
+        { this->setFilter(channel_type, channel_number, filter_id, isEnabled, filter_type_str, center_frequency, q_factor, gain_db, callback); });
+
+    event_manager.on<const std::string &, std::function<void(const std::string &, const std::string &, const std::vector<int> &)>>(
+        "get_signal_amplitudes", [this](const std::string &channel_type, std::function<void(const std::string &, const std::string &, const std::vector<int> &)> callback)
+        { this->getSignalAmplitudes(channel_type, callback); });
 }
 AudioProcessor::~AudioProcessor()
 {
@@ -239,10 +303,6 @@ void AudioProcessor::process()
 }
 
 // Functions that check the parameter values for the set functions
-void AudioProcessor::handleError(const std::string &function_name) const
-{
-    std::cout << "Error with " << function_name << " parameters!" << std::endl;
-}
 bool AudioProcessor::isValidChannel(const std::string &channel_type, unsigned int channel_number, unsigned int input_channels, unsigned int output_channels) const
 {
     if (channel_type == "input")
@@ -293,13 +353,15 @@ BiquadFilter::Type AudioProcessor::stringToFilterType(const std::string &filter_
 }
 
 // Functions to set (change) audio processing values
-bool AudioProcessor::setVolume(const std::string &channel_type, unsigned int channel_number, int volume_db)
+void AudioProcessor::setVolume(const std::string &channel_type, unsigned int channel_number, int volume_db, std::function<void(const std::string &, const std::string &)> callback)
 {
     if (!isValidChannel(channel_type, channel_number, input_channels, output_channels))
     {
-        handleError("setVolume");
-        return false;
+        callback("setVolume", "Error with setVolume parameters!");
+        return;
     }
+
+    callback("setVolume", "Success!");
 
     float volume = std::pow(10, volume_db / 20.0);
     if (channel_type == "input")
@@ -310,17 +372,18 @@ bool AudioProcessor::setVolume(const std::string &channel_type, unsigned int cha
     {
         output_volumes[channel_number - 1] = volume;
     }
-
-    return true;
 }
 
-bool AudioProcessor::setMute(const std::string &channel_type, unsigned int channel_number, bool mute)
+void AudioProcessor::setMute(const std::string &channel_type, unsigned int channel_number, bool mute, std::function<void(const std::string &, const std::string &)> callback)
+
 {
     if (!isValidChannel(channel_type, channel_number, input_channels, output_channels))
     {
-        handleError("setMute");
-        return false;
+        callback("setMute", "Error with setMute parameters!");
+        return;
     }
+
+    callback("setMute", "Success!");
 
     float mute_vol = mute ? 0.0f : 1.0f;
     if (channel_type == "input")
@@ -331,37 +394,40 @@ bool AudioProcessor::setMute(const std::string &channel_type, unsigned int chann
     {
         output_mutes[channel_number - 1] = mute_vol;
     }
-
-    return true;
 }
 
-bool AudioProcessor::setRouting(unsigned int input_channel_number, unsigned int output_channel_number, bool route)
+void AudioProcessor::setRouting(unsigned int input_channel_number, unsigned int output_channel_number, bool route, std::function<void(const std::string &, const std::string &)> callback)
 {
     if (!isValidChannel("input", input_channel_number, input_channels, output_channels) ||
         !isValidChannel("output", output_channel_number, input_channels, output_channels))
     {
-        handleError("setRouting");
-        return false;
+        callback("setRouting", "Error with setRouting parameters!");
+        return;
     }
+
+    callback("setRouting", "Success!");
 
     float route_vol = route ? 1.0f : 0.0f;
     mixing_matrix[input_channel_number - 1][output_channel_number - 1] = route_vol;
-    return true;
 }
 
-bool AudioProcessor::setFilter(const std::string &channel_type, unsigned int channel_number, std::string filter_id, bool isEnabled,
-                               std::string filter_type_str, double center_frequency, double q_factor, double gain_db)
+void AudioProcessor::setFilter(const std::string &channel_type, unsigned int channel_number, unsigned int filter_id, bool isEnabled,
+                               std::string filter_type_str, double center_frequency, double q_factor, double gain_db, std::function<void(const std::string &, const std::string &)> callback)
 {
-    BiquadFilter::Type filter_type = stringToFilterType(filter_type_str);
+    /* std::cout << "setFilter: "
+              << "channel_type: " << channel_type << ", channel_number: " << channel_number << ", filter_id: " << filter_id << ", isEnabled: " << isEnabled << ", filter_type_str: " << filter_type_str << ", center_frequency: " << center_frequency << ", q_factor: " << q_factor << ", gain_db: " << gain_db << std::endl;
+  */ BiquadFilter::Type filter_type = stringToFilterType(filter_type_str);
     if (filter_type == BiquadFilter::Type::Invalid ||
         !isValidChannel(channel_type, channel_number, input_channels, output_channels) ||
         !isValidFrequency(center_frequency) ||
         !isValidQFactor(q_factor) ||
         !isValidGainDb(gain_db))
     {
-        handleError("setFilter");
-        return false;
+        callback("setFilter", "Error with setFilter parameters!");
+        return;
     }
+
+    callback("setFilter", "Success!");
 
     if (channel_type == "input")
     {
@@ -371,8 +437,6 @@ bool AudioProcessor::setFilter(const std::string &channel_type, unsigned int cha
     {
         output_equalizers[channel_number - 1].set_filter(filter_id, isEnabled, filter_type, center_frequency, q_factor, gain_db);
     }
-
-    return true;
 }
 
 // Functions to get audio input or output real time amplitudes
@@ -380,7 +444,6 @@ int AudioProcessor::getAmplitude(const std::string &channel_type, unsigned int c
 {
     if (!isValidChannel(channel_type, channel, input_channels, output_channels))
     {
-        handleError("getAmplitude");
         return -666;
     }
 
@@ -400,7 +463,7 @@ int AudioProcessor::getAmplitude(const std::string &channel_type, unsigned int c
 }
 
 //
-void AudioProcessor::getVolumes(const std::string &channel_type) const
+void AudioProcessor::getSignalAmplitudes(const std::string &channel_type, std::function<void(const std::string &, const std::string &, const std::vector<int> &)> callback) const
 {
     std::string command_status = "fail";
     std::vector<int> volumes;
@@ -420,7 +483,7 @@ void AudioProcessor::getVolumes(const std::string &channel_type) const
         }
         command_status = "success";
     }
-    event_manager.emitEvent("broadcast_volumes", command_status, channel_type, volumes);
+    callback(command_status, channel_type, volumes);
 }
 
 #endif // AUDIO_PROCESSOR_H

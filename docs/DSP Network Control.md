@@ -8,7 +8,7 @@ The format for the JSON commands to be sent to the websocket server is described
 
 ## Value Types and Ranges:
 
-- command_type: string ("set_volume", "set_mute", "set_routing", "set_filter", "get_volumes")
+- command_type: string ("set_volume", "set_mute", "set_routing", "set_filter", "get_signal_amplitudes")
 
 ### command_type: "set_volume"
 - channel_type: string ("input", "output")
@@ -31,15 +31,15 @@ The format for the JSON commands to be sent to the websocket server is described
 ### command_type: "set_filter"
 - channel_type: string ("input", "output")
 - channel_number: unsigned int (1 - 16)
-- filter_id: string (any)
+- filter_id: unsigned int (1 - 16)
 - filter_enabled: bool (false, true)
 - filter_type: string ("highpass", "lowpass", "notch", "peaking")
-- center_frequency: unsigned int (20 - 20000)
-- q_factor: float (0.1 - 10.0)
-- gain_db: int (-60 - 20)
+- center_frequency: double (20.0 - 20000.0)
+- q_factor: double (0.1 - 10.0)
+- gain_db: double (-60 - 20)
 
 
-### command_type: "get_volumes".
+### command_type: "get_signal_amplitudes".
 - channel_type: string ("input", "output")
 
 ---
@@ -51,9 +51,9 @@ Command:
   ```json
   {
     "command_type":"set_volume",
-    "channel_type":"input",
+    "channel_type":"output",
     "channel_number":1,
-    "volume_db":-6
+    "volume_db":-9
   }
   ```
 
@@ -70,9 +70,9 @@ Command:
   ```json
   {
     "command_type":"set_mute",
-    "channel_type":"output",
-    "channel_number":3,
-    "mute":true
+    "channel_type":"input",
+    "channel_number":1,
+    "mute":false
   }
   ```
 
@@ -91,7 +91,7 @@ Command:
     "command_type":"set_routing",
     "input_channel":3,
     "output_channel":1,
-    "route":true
+    "route":false
   }
   ```
 
@@ -108,12 +108,12 @@ Command:
   ```json
   {
     "command_type":"set_filter",
-    "channel_type":"input",
+    "channel_type":"output",
     "channel_number":1,
-    "filter_id":"filter_name",
+    "filter_id":1,
     "filter_enabled":true,
     "filter_type":"highpass",
-    "center_frequency":1000,
+    "center_frequency":700.0,
     "q_factor":0.7,
     "gain_db":0
   }
@@ -131,7 +131,7 @@ Response:
 Command:
   ```json
   {
-    "command_type":"get_volumes",
+    "command_type":"get_signal_amplitudes",
     "channel_type":"input"
   }
   ```
@@ -139,10 +139,9 @@ Command:
 Response:
   ```json
   {
-    "response_to":"get_volumes",
+    "response_to":"get_signal_amplitudes",
     "command_status":"success",
-    "channel_type":"input",
-    "volumes":[-60, -60, -20, -60, -60, -60, -60, -60]
+    "volumes":[-72,-60,-82,-68,-56,-90,-84,-57]
   }
   ```
 

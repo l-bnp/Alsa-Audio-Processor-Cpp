@@ -1,10 +1,11 @@
 [Unit]
-#Description="l-bnp's Linux ALSA Audio DSP Service"
-After=network.service
+Description="l-bnp's Linux ALSA Audio DSP Service"
+After=mysql.service
+Requires=mysql.service
 
 [Service]
 WorkingDirectory=/home/user/audiodsp
-ExecStart=/home/user/audiodsp/dsp-app
+ExecStart=/home/user/audiodsp/dsp-app  -interface:"plughw:CARD=PCH,DEV=0" -inputs:16 -outputs:8 -rate:44100 -port:3001
 Restart=always
 RestartSec=3
 User=root
