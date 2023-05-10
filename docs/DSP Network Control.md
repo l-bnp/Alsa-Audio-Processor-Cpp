@@ -4,31 +4,141 @@ The network control of the audio processor is done through sending specific JSON
 
 --- 
 
-The format for the JSON commands to be sent to the websocket server is described below. All the commands should include at least a `command_type` field, specifying the desired command. For each `command_type` there will be a different number and type of extra arguments required.
+All JSON shall contain a `command_type` property with string value and additional properties, for each command type. The available commands are the following:
 
-## Value Types and Ranges:
+| Command          | Command Arguments                                                     | Response            | Response Arguments                                                |
+|------------------|-----------------------------------------------------------------------|---------------------|-------------------------------------------------------------------|
+| set_gain         | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- gain_db: double | notify_gain,<br>set_gain_failed | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- gain_db: double         |
+| get_gain         | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int | notify_gain,<br>get_gain_failed | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- gain_db: double         |
+| set_mute         | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- mute: bool       | notify_mute,<br>set_mute_failed   | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- mute: bool             |
+| get_mute         | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int | notify_mute,<br>get_mute_failed   | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- mute: bool             |
+| set_mixer        | - command_type: string<br>- input_channel: unsigned int<br>- output_channel: unsigned int<br>- mix: bool | notify_mixer,<br>set_mixer_failed | - command_type: string<br>- input_channel: unsigned int<br>- output_channel: unsigned int<br>- mix: bool |
+| get_mixer        | - command_type: string<br>- input_channel: unsigned int<br>- output_channel: unsigned int | notify_mixer,<br>get_mixer_failed | - command_type: string<br>- input_channel: unsigned int<br>- output_channel: unsigned int<br>- mix: bool |
+| set_filter       | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- filter_id: unsigned int<br>- filter_enabled: bool<br>- filter_type: string<br>- center_frequency: double<br>- q_factor: double<br>- gain_db: double | notify_filter,<br>set_filter_failed | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- filter_id: unsigned int<br>- filter_enabled: bool<br>- filter_type: string<br>- center_frequency: double<br>- q_factor: double<br>- gain_db: double |
+| get_filter       | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- filter_id: unsigned int | notify_filter,<br>get_filter_failed | - command_type: string<br>- channel_type: string<br>- channel_number: unsigned int<br>- filter_id: unsigned int<br>- filter_enabled: bool<br>- filter_type: string<br>- center_frequency: double<br>- q_factor: double<br>- gain_db: double |
+| get_meter | - command_type: string<br>- channel_type: string | notify_meter,<br>get_meter_failed | - command_type: string<br>- channel_type: string<br>- amplitudes_db: array<double> |
 
-- command_type: string ("set_volume", "set_mute", "set_routing", "set_filter", "get_signal_amplitudes")
 
-### command_type: "set_volume"
+--- 
+
+# Command Descriptions:
+
+## Set Gain
+
+Sets the value of a channel's volume. Should specify if its an input or output channel, the channel number and the desired volume level in dBFS.
+
+#### Command:
+- command_type: string ("set_gain")
 - channel_type: string ("input", "output")
 - channel_number: unsigned int (1 - 16)
-- volume_db: int (-60 - 0)
+- gain_db: double (-60.0 - 0.0)
+
+#### Response:
+- command_type: string ("notify_gain", "set_gain_failed")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+- gain_db: double (-60.0 - 0.0)
 
 
-### command_type: "set_mute"
+## Get Gain
+
+Asks for the value of a channel's volume. Should specify if its an input or output channel and the channel number. Gets a return value of volume in dBFS.
+
+#### Command:
+- command_type: string ("get_gain")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+
+#### Response:
+- command_type: string ("notify_gain", "get_gain_failed")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+- gain_db: double (-60.0 - 0.0)
+
+
+## Set Mute
+
+Sets the value of a channel's mute. Should specify if its an input or output channel, the channel number and the desired mute state, either true or false.
+
+#### Command:
+- command_type: string ("set_mute")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+- mute: bool (false, true)
+
+#### Response:
+- command_type: string ("notify_mute", "set_mute_failed")
 - channel_type: string ("input", "output")
 - channel_number: unsigned int (1 - 16)
 - mute: bool (false, true)
 
 
-### command_type: "set_routing"
+## Get Mute
+
+Asks for the value of a channel's mute. Should specify if its an input or output channel and the channel number. Gets a return value specifying the mute state of the channel, either true or false.
+
+#### Command:
+- command_type: string ("get_mute")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+
+#### Response:
+- command_type: string ("notify_mute", "get_mute_failed")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+- mute: bool (false, true)
+
+
+## Set Mixer
+
+Sets the routing of any input channel to any output channel as true or false. Should specify the input channel number, the output channel number, and the desired mix state, either true or false.
+
+#### Command:
+- command_type: string ("set_mixer")
 - input_channel: unsigned int (1 - 16)
 - output_channel: unsigned int (1 - 16)
-- route: bool (false, true)
+- mix: bool (false, true)
+
+#### Response:
+- command_type: string ("notify_mixer", "set_mixer_failed")
+- input_channel: unsigned int (1 - 16)
+- output_channel: unsigned int (1 - 16)
+- mix: bool (false, true)
 
 
-### command_type: "set_filter"
+## Get Mixer
+
+Asks for the routing of an input channel to an output channel. Should specify the input channel number and the output channel number. Get returned the mix state, either true or false.
+
+#### Command:
+- command_type: string ("get_mixer")
+- input_channel: unsigned int (1 - 16)
+- output_channel: unsigned int (1 - 16)
+
+#### Response:
+- command_type: string ("notify_mixer", "get_mixer_failed")
+- input_channel: unsigned int (1 - 16)
+- output_channel: unsigned int (1 - 16)
+- mix: bool (false, true)
+
+
+## Set Filter
+
+Sets a filter for a channel. Should specify if its an input or output channel, the channel number, the filter number (id) and the filter parameters: If its enabled or disabled, the filter type, the center frequency in Hz, the Q factor and the gain in dBFS.
+
+#### Command:
+- command_type: string ("set_filter")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+- filter_id: unsigned int (1 - 16)
+- filter_enabled: bool (false, true)
+- filter_type: string ("highpass", "lowpass", "notch", "peaking")
+- center_frequency: double (20.0 - 20000.0)
+- q_factor: double (0.1 - 10.0)
+- gain_db: double (-60 - 20)
+
+#### Response:
+- command_type: string ("notify_filter", "set_filter_failed")
 - channel_type: string ("input", "output")
 - channel_number: unsigned int (1 - 16)
 - filter_id: unsigned int (1 - 16)
@@ -39,75 +149,259 @@ The format for the JSON commands to be sent to the websocket server is described
 - gain_db: double (-60 - 20)
 
 
-### command_type: "get_signal_amplitudes".
+## Get Filter
+
+Asks for a specific filter state for a given channel channel. Should specify if its an input or output channel, the channel number and the filter number (id). Gets as returned value the filter parameters: If its enabled or disabled, the filter type, the center frequency in Hz, the Q factor and the gain in dBFS.
+
+#### Command:
+- command_type: string ("get_filter")
 - channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+- filter_id: unsigned int (1 - 16)
+
+#### Response:
+- command_type: string ("notify_filter", "get_filter_failed")
+- channel_type: string ("input", "output")
+- channel_number: unsigned int (1 - 16)
+- filter_id: unsigned int (1 - 16)
+- filter_enabled: bool (false, true)
+- filter_type: string ("highpass", "lowpass", "notch", "peaking")
+- center_frequency: double (20.0 - 20000.0)
+- q_factor: double (0.1 - 10.0)
+- gain_db: double (-60 - 20)
+
+
+## Get Signal Amplitudes
+
+Asks for the current amplitudes of either all input channel or all output channels. Should specify only if its requiring input or output levels. Gets an array with the amplitudes in dBFS as a return value.
+
+#### Command:
+- command_type: string ("get_meter")
+- channel_type: string ("input", "output")
+
+#### Response:
+- command_type: string ("notify_meter", "get_meter_failed")
+- channel_type: string ("input", "output")
+- amplitudes_db: array\<double\>
+
 
 ---
 
-## Examples:
+# Examples:
 
-### Set Volume
-Command:
+
+## Set Gain
+
+#### Command:
   ```json
   {
-    "command_type":"set_volume",
+    "command_type":"set_gain",
     "channel_type":"output",
     "channel_number":1,
-    "volume_db":-9
+    "gain_db":-20.0
   }
   ```
 
-Response:
+#### Success Response:
   ```json
   {
-    "response_to":"set_volume",
-    "command_status":"success"
+    "command_type":"notify_gain",
+    "channel_type":"output",
+    "channel_number":1,
+    "gain_db":-20.0
+  }
+  ```
+  
+#### Fail Response:
+  ```json
+  {
+    "command_type":"set_gain_failed",
+    "channel_type":"output",
+    "channel_number":1,
+    "gain_db":-20.0
   }
   ```
 
-### Mute Channel
-Command:
+## Get Gain
+
+#### Command:
+  ```json
+  {
+    "command_type":"get_gain",
+    "channel_type":"input",
+    "channel_number":2
+  }
+  ```
+
+#### Success Response:
+  ```json
+  {
+    "command_type":"notify_gain",
+    "channel_type":"input",
+    "channel_number":2,
+    "gain_db":-9.0
+  }
+  ```
+
+#### Fail Response:
+  ```json
+  {
+    "command_type":"get_gain_failed",
+    "channel_type":"input",
+    "channel_number":2,
+    "gain_db":0.0
+  }
+  ```
+
+## Set Mute
+
+#### Command:
   ```json
   {
     "command_type":"set_mute",
+    "channel_type":"output",
+    "channel_number":1,
+    "mute":false
+  }
+  ```
+
+#### Success Response:
+  ```json
+  {
+    "command_type":"notify_mute",
     "channel_type":"input",
     "channel_number":1,
     "mute":false
   }
   ```
 
-Response:
+#### Fail Response:
   ```json
   {
-    "response_to":"set_mute",
-    "command_status":"success"
+    "command_type":"set_mute_failed",
+    "channel_type":"input",
+    "channel_number":1,
+    "mute":false
   }
   ```
 
-### Route Input to Output
-Command:
+
+## Get Mute
+
+#### Command:
   ```json
   {
-    "command_type":"set_routing",
+    "command_type":"get_mute",
+    "channel_type":"input",
+    "channel_number":1
+  }
+  ```
+
+#### Success Response:
+  ```json
+  {
+    "command_type":"notify_mute",
+    "channel_type":"input",
+    "channel_number":1,
+    "mute":false
+  }
+  ```
+
+#### Fail Response:
+  ```json
+  {
+    "command_type":"get_mute_failed",
+    "channel_type":"input",
+    "channel_number":1,
+    "mute":false
+  }
+  ```
+
+
+## Set Mixer
+
+#### Command:
+  ```json
+  {
+    "command_type":"set_mixer",
+    "input_channel":1,
+    "output_channel":1,
+    "mix":true
+  }
+  ```
+
+#### Success Response:
+  ```json
+  {
+    "command_type":"notify_mixer",
     "input_channel":3,
     "output_channel":1,
-    "route":false
+    "mix":false
   }
   ```
 
-Response:
+#### Fail Response:
   ```json
   {
-    "response_to":"set_routing",
-    "command_status":"success"
+    "command_type":"set_mixer_failed",
+    "input_channel":3,
+    "output_channel":1,
+    "mix":false
   }
   ```
 
-### Set Filter
-Command:
+## Get Mixer
+
+#### Command:
+  ```json
+  {
+    "command_type":"get_mixer",
+    "input_channel":1,
+    "output_channel":1
+  }
+  ```
+
+#### Success Response:
+  ```json
+  {
+    "command_type":"notify_mixer",
+    "input_channel":3,
+    "output_channel":1,
+    "mix":false
+  }
+  ```
+
+#### Fail Response:
+  ```json
+  {
+    "command_type":"get_mixer_failed",
+    "input_channel":3,
+    "output_channel":1,
+    "mix":false
+  }
+  ```
+
+## Set Filter
+
+#### Command:
   ```json
   {
     "command_type":"set_filter",
+    "channel_type":"input",
+    "channel_number":1,
+    "filter_id":2,
+    "filter_enabled":false,
+    "filter_type":"lowpass",
+    "center_frequency":700.0,
+    "q_factor":0.7,
+    "gain_db":0
+  }
+  ```
+
+#### Success Response:
+  ```json
+  {
+    "command_type":"notify_filter",
     "channel_type":"output",
     "channel_number":1,
     "filter_id":1,
@@ -119,29 +413,89 @@ Command:
   }
   ```
 
-Response:
+#### Fail Response:
   ```json
   {
-    "response_to":"set_filter",
-    "command_status":"success"
+    "command_type":"set_filter_failed",
+    "channel_type":"output",
+    "channel_number":1,
+    "filter_id":1,
+    "filter_enabled":true,
+    "filter_type":"highpass",
+    "center_frequency":700.0,
+    "q_factor":0.7,
+    "gain_db":0
   }
   ```
 
-### Get All Volume Levels in dB
-Command:
+
+## Get Filter
+
+#### Command:
   ```json
   {
-    "command_type":"get_signal_amplitudes",
+    "command_type":"get_filter",
+    "channel_type":"input",
+    "channel_number":1,
+    "filter_id":2
+  }
+  ```
+
+#### Success Response:
+  ```json
+  {
+    "command_type":"notify_filter",
+    "channel_type":"output",
+    "channel_number":1,
+    "filter_id":1,
+    "filter_enabled":true,
+    "filter_type":"highpass",
+    "center_frequency":700.0,
+    "q_factor":0.7,
+    "gain_db":0
+  }
+  ```
+
+#### Fail Response:
+  ```json
+  {
+    "command_type":"get_filter_failed",
+    "channel_type":"output",
+    "channel_number":1,
+    "filter_id":1,
+    "filter_enabled":false,
+    "filter_type":"peaking",
+    "center_frequency":0.0,
+    "q_factor":0.0,
+    "gain_db":0
+  }
+  ```
+
+## Get Signal Amplitudes
+
+#### Command:
+  ```json
+  {
+    "command_type":"get_meter",
     "channel_type":"input"
   }
   ```
 
-Response:
+#### Success Response:
   ```json
   {
-    "response_to":"get_signal_amplitudes",
-    "command_status":"success",
-    "volumes":[-72,-60,-82,-68,-56,-90,-84,-57]
+    "command_type":"notify_meter",
+    "channel_type":"input",
+    "amplitudes_db":[-72.0,-60.0,-82.0,-68.0,-56.0,-90.0,-84.0,-57.0]
+  }
+  ```
+
+#### Fail Response:
+  ```json
+  {
+    "command_type":"get_meter_failed",
+    "channel_type":"input",
+    "amplitudes_db":[]
   }
   ```
 
