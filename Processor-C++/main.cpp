@@ -3,9 +3,9 @@
 #include <iostream>
 #include <sstream>
 #include "audio_processor.h"
-#include "custom_websocket_server.h"
-#include "submodules/Event-Manager-Cpp/event_manager.h"
-#include "database.h"
+#include "Utilities/custom_websocket_server.h"
+#include "Utilities/event_manager.h"
+#include "Utilities/database.h"
 
 // Function to parse an unsigned integer argument from a command line argument string
 bool parse_uint_arg(const char *arg, const std::string &flag, unsigned int &value)
@@ -73,25 +73,32 @@ int main(int argc, char *argv[])
     // This file needs to be saved after the first time the audio interface is configured
     system("alsactl --file ~/.config/asound.state restore");
 
-    // Create EventManager object
-    EventManager event_manager;
-
     // Database connection details
     std::string host = "localhost";
     int dbPort = 33060;
     std::string user = "root";
-    std::string password = "assword";
+    std::string password = "wave123";
     std::string schema = "audio_processor";
-    Database db(host, dbPort, user, password, schema, event_manager);
+
+    // Create database
+    std::cout << "Connecting to database..." << std::endl;
+    Database db(host, dbPort, user, password, schema);
+    std::cout << "Connected to database" << std::endl;
 
     // Create AudioProcessor object with the specified audio interface, input and output channels, and sample rate
-    AudioProcessor audioProcessor(audio_interface_cstr, input_channels, output_channels, rate, event_manager);
+    std::cout << "Creating audio processor..." << std::endl;
+    AudioProcessor audioProcessor(audio_interface_cstr, input_channels, output_channels, rate);
+    std::cout << "Created audio processor" << std::endl;
 
     // Create CustomWebSocketServer object with the specified port and audioProcessor object
-    CustomWebSocketServer webSocketServer(port, event_manager);
+    std::cout << "Creating websocket server..." << std::endl;
+    CustomWebSocketServer webSocketServer(port);
+    std::cout << "Created websocket server" << std::endl;
 
     // Start audio processing
+    std::cout << "Starting audio processor..." << std::endl;
     audioProcessor.start();
+    std::cout << "Started audio processor" << std::endl;
 
     return 0;
 }

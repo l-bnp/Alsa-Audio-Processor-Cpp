@@ -14,29 +14,29 @@
 class BiquadFilter
 {
 public:
-    enum Type
-    {
-        Lowpass,
-        Highpass,
-        Notch,
-        Peaking,
-        Invalid
-    };
-    // Enable filter functions
-    bool isEnabled() const { return filterEnabled; }
-    void setEnabled(bool enable) { filterEnabled = enable; }
     // Constructor
-    explicit BiquadFilter(Type type, double sample_rate, double frequency, double q, double gain_db = 0.0);
+    explicit BiquadFilter(std::string filter_type, double sample_rate, double center_frequency, double q_factor, double gain_db);
     // Destructor
     ~BiquadFilter();
     // set_params function
-    void set_params(Type type, double sample_rate, double frequency, double q, double gain_db = 0.0);
+    void set_params(std::string filter_type, double sample_rate, double center_frequency, double q_factor, double gain_db);
     // Process function
     short process(short sample);
+    // Functions to return filter parameters
+    std::string get_filter_type() const { return filter_type_; }
+    double get_sample_rate() const { return sample_rate_; }
+    double get_center_frequency() const { return center_frequency_; }
+    double get_q_factor() const { return q_factor_; }
+    double get_gain_db() const { return gain_db_; }
 
 private:
-    // Enable filter variable
-    bool filterEnabled = true;
+    // Filter parameters
+    std::string filter_type_ = "peaking";
+    double sample_rate_ = 44100;
+    double center_frequency_ = 1000;
+    double q_factor_ = 0.707;
+    double gain_db_ = 0;
+
     // Coefficients of the numerator and denominator of the transfer function
     double a0_, a1_, a2_, b0_, b1_, b2_;
     // State variables (delay line)
@@ -44,9 +44,9 @@ private:
 };
 
 // Constructor
-BiquadFilter::BiquadFilter(Type type, double sample_rate, double frequency, double q, double gain_db)
+BiquadFilter::BiquadFilter(std::string filter_type, double sample_rate, double center_frequency, double q_factor, double gain_db)
 {
-    set_params(type, sample_rate, frequency, q, gain_db);
+    set_params(filter_type, sample_rate, center_frequency, q_factor, gain_db);
 }
 
 // Destructor
@@ -55,17 +55,24 @@ BiquadFilter::~BiquadFilter()
 }
 
 // Function to set up filter coefficients depending on filter type
-void BiquadFilter::set_params(Type type, double sample_rate, double frequency, double q, double gain_db)
+void BiquadFilter::set_params(std::string filter_type, double sample_rate, double center_frequency, double q_factor, double gain_db)
 {
+    // Set filter parameters
+    filter_type_ = filter_type;
+    sample_rate_ = sample_rate;
+    center_frequency_ = center_frequency;
+    q_factor_ = q_factor;
+    gain_db_ = gain_db;
+
     // Calculate linear gain from gain in decibels
     double gain = std::pow(10, gain_db / 20.0);
 
     // Variables for filter coefficients
     double a0, a1, a2, b0, b1, b2;
     // Normalized angular frequency in radians
-    double w0 = 2 * M_PI * frequency / sample_rate;
+    double w0 = 2 * M_PI * center_frequency / sample_rate;
     // Alpha value, a parameter for computing filter coefficients
-    double alpha = std::sin(w0) / (2 * q);
+    double alpha = std::sin(w0) / (2 * q_factor);
     // Cosine of the normalized angular frequency
     double cos_w0 = std::cos(w0);
 
@@ -76,39 +83,35 @@ void BiquadFilter::set_params(Type type, double sample_rate, double frequency, d
     // The bilinear transform is defined as:
     // s = (2 * (z - 1)) / (T * (z + 1))
     // where T is the sampling period.
-    switch (type)
-    {
-    case Lowpass:
+    if (filter_type == "lowpass")
     {
         // Analog transfer function H(s) = 1 / (s^2 + s/Q + 1)
         // Applying the bilinear transformation and solving for H(z), we get:
         // H(z) = (b0 + b1 * z^(-1) + b2 * z^(-2)) / (a0 + a1 * z^(-1) + a2 * z^(-2))
-        double K = std::tan(M_PI * frequency / sample_rate);
-        double norm = 1 / (1 + K / q + K * K);
+        double K = std::tan(M_PI * center_frequency / sample_rate);
+        double norm = 1 / (1 + K / q_factor + K * K);
         b0 = K * K * norm;
         b1 = 2 * b0;
         b2 = b0;
         a0 = 1;
         a1 = 2 * (K * K - 1) * norm;
-        a2 = (1 - K / q + K * K) * norm;
-        break;
+        a2 = (1 - K / q_factor + K * K) * norm;
     }
-    case Highpass:
+    else if (filter_type == "highpass")
     {
         // Analog transfer function H(s) = s^2 / (s^2 + s/Q + 1)
         // Applying the bilinear transformation and solving for H(z), we get:
         // H(z) = (b0 + b1 * z^(-1) + b2 * z^(-2)) / (a0 + a1 * z^(-1) + a2 * z^(-2))
-        double K = std::tan(M_PI * frequency / sample_rate);
-        double norm = 1 / (1 + K / q + K * K);
+        double K = std::tan(M_PI * center_frequency / sample_rate);
+        double norm = 1 / (1 + K / q_factor + K * K);
         b0 = norm;
         b1 = -2 * b0;
         b2 = b0;
         a0 = 1;
         a1 = 2 * (K * K - 1) * norm;
-        a2 = (1 - K / q + K * K) * norm;
-        break;
+        a2 = (1 - K / q_factor + K * K) * norm;
     }
-    case Notch:
+    else if (filter_type == "notch")
     {
         // H(s) = (s^2 + 1) / (s^2 + s/Q + 1)
         // Applying the bilinear transformation and solving for H(z), we get:
@@ -119,9 +122,8 @@ void BiquadFilter::set_params(Type type, double sample_rate, double frequency, d
         a0 = 1 + alpha;
         a1 = -2 * cos_w0;
         a2 = 1 - alpha;
-        break;
     }
-    case Peaking:
+    else if (filter_type == "peaking")
     {
         double a = std::sqrt(gain);
         double alpha_a = alpha * a;
@@ -133,8 +135,6 @@ void BiquadFilter::set_params(Type type, double sample_rate, double frequency, d
         a0 = 1 + alpha_d;
         a1 = -2 * cos_w0;
         a2 = 1 - alpha_d;
-        break;
-    }
     }
 
     // Normalize filter coefficients
