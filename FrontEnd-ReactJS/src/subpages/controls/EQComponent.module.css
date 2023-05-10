@@ -1,0 +1,60 @@
+/* Beggining of EQComponent.module.css */
+
+.svg {
+    border: var(--default-border-size) solid var(--theme-light);
+    border-radius: 10px;
+  }
+  
+  .svgContainer {
+    position: relative;
+  }
+
+  .background {
+    fill: var(--theme-light-25);
+  }
+
+  .frequencyResponseCurve {
+    stroke: var(--theme-light);
+    stroke-width: 2;
+    fill: none;
+  }
+  
+  .gridLine {
+    stroke: var(--theme-light-50);
+    stroke-width: 1;
+  }
+
+  .zeroDbGridLine {
+    stroke: var(--theme-light-50);
+    stroke-width: 2;
+    shape-rendering: crispEdges;
+  }
+
+  .tick {
+    stroke: black;
+    stroke-width: 1;
+  }
+  
+  .axisLabel {
+    font-size: 14px;
+    fill: var(--theme-light);
+    font-family: Roboto Bold;
+    font-weight: 700;
+  }
+
+  .circle {
+    fill: white;
+    stroke: var(--theme-light);
+    stroke-width: 2;
+    cursor: pointer;
+  }
+
+  .circleLabel {
+    font-size: 10px;
+    fill: var(--theme-light);
+    font-family: Roboto Regular;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+/* End of EQComponent.module.css */

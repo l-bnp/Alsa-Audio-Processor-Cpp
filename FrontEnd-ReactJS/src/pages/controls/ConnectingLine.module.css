@@ -1,0 +1,35 @@
+.container {
+  width: 100%;
+  height: var(--main-page-component-height);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.leftCircle,
+.rightCircle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--theme-dark);
+  top: calc(50% - 4px);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+}
+
+.leftCircle {
+  left: -4px;
+}
+
+.rightCircle {
+  right: -4px;
+}
+
+.connectingLine {
+  width: 100%;
+  height: 4px;
+  background: var(--theme-dark);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+}

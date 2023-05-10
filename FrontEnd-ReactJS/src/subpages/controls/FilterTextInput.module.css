@@ -1,0 +1,47 @@
+.container {
+    width: var(--filter-parameter-box-width);
+    height: 100%;
+    border: var(--default-border-size) solid var(--theme-light);
+    border-radius: 5px;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    user-select: none;
+  }
+
+  .container[data-active=false] {
+    opacity: 0.6;
+    cursor: default;
+  }
+  
+  .input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    font-family: "Roboto Regular";
+    font-weight: 400;
+    font-size: var(--filter-parameter-font-size);
+    color: var(--theme-light);
+    text-align: center;
+    user-select: none;
+  }
+  
+  .input::placeholder {
+    color: var(--theme-light);
+    opacity: 0.5;
+  }
+  
+  .input:focus {
+    outline: none;
+  }
+
+  /* Disable default input arrow buttons */
+  .input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+  

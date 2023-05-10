@@ -1,0 +1,28 @@
+.container {
+    width: var(--filter-parameter-box-width);
+    height: 100%;
+    border: var(--default-border-size) solid var(--theme-light);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent;
+  }
+
+.container[data-active=true] {
+  background: var(--theme-light);
+}
+  
+.text {
+  font-family: "Roboto Regular";
+  font-weight: 300;
+  font-size: var(--filter-parameter-font-size);
+  color: var(--theme-light);
+  user-select: none;
+}
+
+.text[data-active=true] {
+  color: white;
+  }
+  

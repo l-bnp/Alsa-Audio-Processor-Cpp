@@ -1,0 +1,14 @@
+.filterParameters {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  width: 100%;
+  background: transparent;
+}
+
+.filterParameter {
+  height: var(--filter-parameter-box-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

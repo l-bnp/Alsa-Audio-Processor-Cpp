@@ -1,0 +1,16 @@
+.checkboxButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+  background-color: transparent;
+  border: var(--default-border-size) solid var(--theme-light);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.checkboxButton[data-active="true"] {
+  background-color: var(--theme-light);
+}

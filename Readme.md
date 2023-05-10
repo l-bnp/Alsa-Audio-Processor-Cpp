@@ -6,6 +6,7 @@
 
 ---
 
-- [Start Instructions](./docs/Running%20The%20Program.md)
-- [Database State Management](./docs/State%20Managing.md)
-- [Network Control](./docs/DSP%20Network%20Control.md)
+- [Processor Start Instructions](./docs/Running%20The%20Program.md)
+- [Processor Database State Management](./docs/State%20Managing.md)
+- [Network Control API](./docs/DSP%20Network%20Control.md)
+- [User Interface Start Instructions](./docs/)

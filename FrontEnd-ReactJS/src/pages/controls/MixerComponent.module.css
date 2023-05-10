@@ -1,0 +1,14 @@
+.mixerComponent {
+background-color: var(--theme-light);
+border-radius: 10px;
+width: 100px;
+height: 100%;
+display: flex;
+align-items: center;
+justify-content: center;
+box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+}
+
+.mixerComponent:hover {
+    cursor: pointer;
+}

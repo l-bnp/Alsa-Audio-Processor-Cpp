@@ -1,0 +1,12 @@
+:root {
+    --theme-light: #257c6c;
+    --theme-dark: #19564b;
+    --theme-light-25: #257c6c22;
+    --theme-light-50: #257c6c66;
+    --default-border-size: 4px;
+    --main-page-component-height: 50px;
+    --main-page-component-icon-size: 50px;
+    --filter-parameter-box-width: 100px;
+    --filter-parameter-box-height: 18px;
+    --filter-parameter-font-size: 14px;
+}

@@ -1,0 +1,75 @@
+.container {
+    position: relative;
+    width: var(--filter-parameter-box-width);
+    height: 100%;
+    border: var(--default-border-size) solid var(--theme-light);
+    border-radius: 5px;
+  }
+
+  .container[data-active=false] {
+    opacity: 0.6;
+    cursor: default;
+  }
+  
+  .selected {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    font-family: 'Roboto Regular';
+    font-weight: 300;
+    font-size: var(--filter-parameter-font-size);
+    color: var(--theme-light);
+    text-align: left;
+    padding-left: 3px;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  
+  .options {
+    margin-left: calc(0.5px - var(--default-border-size));
+  margin-top: 10px;
+    position: absolute;
+    width: calc(100% + 0.5px);
+    background: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    border: var(--default-border-size) solid var(--theme-light);
+    border-radius: 5px;
+    z-index: 1;
+    backdrop-filter: blur(20px);
+  }
+
+  .options.dropUp {
+    margin-top: -50px;
+    transform: translateY(-100%);
+  }
+  
+  .option {
+    padding: 0px 10px;
+    font-family: 'Roboto Regular';
+    font-weight: 300;
+    font-size: var(--filter-parameter-font-size);
+    color: var(--theme-light);
+    cursor: pointer;
+    background: transparent;
+    user-select: none;
+  }
+
+  .option:hover {
+    background: var(--theme-light);
+    color: white;
+  }
+
+  .selectedOption {
+    background-color: var(--theme-light);
+    color: white;
+  }
+
+  .arrow {
+    position: absolute;
+    top: 50%;
+    right: 3px;
+    transform: translateY(-50%);
+    color: var(--theme-light);
+    pointer-events: none;
+  }

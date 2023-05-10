@@ -1,0 +1,78 @@
+.configSubpage {
+    position: absolute;
+    top: 25px;
+    left: 0px;
+    padding: 0;
+    border: 0;
+    margin: 0;
+    width: 100%;
+    height: calc(100% - 75px);
+    background: transparent;
+    color: #000;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    user-select: none;
+  }
+  
+  .configSubpageContent {
+    position: absolute;
+    width: 100%;
+    height: calc(100% - 50px);
+    top: 50px;
+    left: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .controlName {
+    position: relative;
+    width: 400px;
+    height: var(--filter-parameter-box-height);
+    padding-bottom: 20px;
+    color: var(--theme-dark);
+    font-family: "Roboto Bold";
+    font-weight: 700;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    background: transparent;
+  }
+
+.button {
+    width: 100px;
+    height: var(--filter-parameter-box-height);
+    padding-top: 20px;
+}
+
+.websocketState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    font-family: "Roboto";
+    font-size: 18px;
+    font-weight: normal;
+    color: var(--theme-dark);
+  }
+  
+  .websocketStateText {
+    font-family: "Roboto";
+    font-size: 18px;
+    font-weight: bold;
+    margin-left: 10px;
+    color: red;
+  }
+
+  .websocketStateText[data-active=true] {
+    color: green;
+  }
+
+  .websocketStateText[data-active=false] {
+    color: red;
+  }

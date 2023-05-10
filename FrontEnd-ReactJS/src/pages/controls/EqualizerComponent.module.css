@@ -1,0 +1,15 @@
+.equalizerComponent {
+background-color: var(--theme-light);
+border-radius: 10px;
+width: 100px;
+height: var(--main-page-component-height);
+display: flex;
+align-items: center;
+justify-content: center;
+box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
+
+}
+
+.equalizerComponent:hover {
+    cursor: pointer;
+}

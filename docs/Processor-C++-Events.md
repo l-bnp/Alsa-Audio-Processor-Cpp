@@ -1,6 +1,6 @@
 # Events 
 
-These are the events handled by the internal event manager and the classes that emit and listen to them:
+These are the events handled by the internal event manager in the C++ audio processor program.  The table shows the classes that emit and listen to each event:
 
 | Event Name                | Event Emitter Classes                  | Event Listener Classes                 | 
 |---------------------------|----------------------------------------|----------------------------------------|

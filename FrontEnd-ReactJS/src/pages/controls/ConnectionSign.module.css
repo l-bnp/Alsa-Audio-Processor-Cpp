@@ -1,0 +1,14 @@
+.connectionSign {
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.connectionSign[data-active="true"] {
+    background: #00E13F;
+}
+
+.connectionSign[data-active="false"] {
+    background: #FF0000;
+}

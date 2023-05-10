@@ -1,0 +1,27 @@
+.footerButton {
+    position: relative;
+    width: 80px;
+    height: 100%;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    outline: none;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+.footerButton[data-active="true"] {
+    background: var(--theme-dark);
+}
+.footerButton[data-active="false"]:hover {
+    background: var(--theme-light);
+}
+
+.buttonIcon {
+    width: 40px;
+    height: 30px;
+}

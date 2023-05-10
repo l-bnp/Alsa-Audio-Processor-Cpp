@@ -1,0 +1,35 @@
+/* FilterApplyButton.module.css */
+.container {
+    width: calc(var(--filter-parameter-box-width)/1);
+    height: 100%;
+    border: var(--default-border-size) solid var(--theme-light);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    background: transparent;
+    transition: background 0.2s ease;
+  }
+  
+  .container[data-active=false] {
+    opacity: 0.6;
+    cursor: default;
+  }
+  
+  .container[data-pressed=true] {
+    background: var(--theme-light);
+  }
+  
+  .text {
+    font-family: "Roboto Regular";
+    font-weight: 300;
+    font-size: var(--filter-parameter-font-size);
+    color: var(--theme-light);
+    user-select: none;
+  }
+
+  .text[data-pressed=true] {
+    color: white;
+  }
